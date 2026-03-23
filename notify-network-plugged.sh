@@ -1,4 +1,4 @@
-#!/data/data/com.termux/files/usr/bin/sh
+#!/bin/sh
 #
 ## @author: David Colmenares
 ## @copyright: Copyright (C) 2023 David Colmenares
@@ -99,3 +99,4 @@ main() {
 }
 
 main $@
+
