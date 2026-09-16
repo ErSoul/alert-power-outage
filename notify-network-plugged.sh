@@ -4,6 +4,12 @@
 ## @copyright: Copyright (C) 2023 David Colmenares
 ## @license: 4-Clause BSD
 
+# Used Environment Variables
+# OUTPUT_CSV_FILE=
+# TOPIC=
+# STATE_FILE=
+# LOCATION=
+
 help_usage() {
 	echo -e "usage: `basename $0` [-f FILE] <TARGET>\n"
 	cat << EOF
@@ -15,9 +21,16 @@ Argument:
 Options:
 
 -h --help --usage	Show this help message.
--t FILE File to read previous state
+-f FILE File to read previous state
+-t TOPIC	NTFY topic name
+-o CSV_FILE	Output file for historic
+-l LOCATION	Set a label for the location.
 EOF
 exit 0
+}
+
+write_to_csv(){
+	[ -n "${OUTPUT_CSV_FILE}" ] && echo "`date +%s`,${1}" >> ${OUTPUT_CSV_FILE}
 }
 
 main() {
@@ -37,13 +50,19 @@ main() {
 				;;
 			-f|-F)
 				STATE_FILE=$2
-				shift
-				shift
+				shift 2
 				;;
 			-t|-T)
 				TOPIC=$2
-				shift
-				shift
+				shift 2
+				;;
+			-o|-O|--output-file)
+				OUTPUT_CSV_FILE=$2
+				shift 2
+				;;
+			-l|-L|--location)
+				LOCATION=$2
+				shift 2
 				;;
 			-*|--*)
 				echo "Invalid option $1" >&2
@@ -56,10 +75,12 @@ main() {
 		esac
 	done
 
-	[ -z $STATE_FILE ] && echo "ERROR: FILE must be provided." >&2 && exit 1
-	[ -z $TOPIC ] && echo "ERROR: TOPIC must be provided. (ntfy topic)" >&2 && exit 1
-	[ -z $TARGET ] && echo "ERROR: TARGET must be setted." >&2 && exit 1
-	
+	[ -z "$STATE_FILE" ] && echo "ERROR: FILE must be provided." >&2 && exit 1
+	[ -z "$TOPIC" ] && echo "ERROR: TOPIC must be provided. (ntfy topic)" >&2 && exit 1
+	[ -z "$TARGET" ] && echo "ERROR: TARGET must be setted." >&2 && exit 1
+
+	[ -n "${OUTPUT_CSV_FILE}" ] && [ ! -f ${OUTPUT_CSV_FILE} ] && echo "date,state" > ${OUTPUT_CSV_FILE}
+
 	OK=0
 	FAULT=1
 	
@@ -70,14 +91,14 @@ main() {
 		PREV_STATUS=$FAULT
 	fi
 	
-	ping -c5 $TARGET >/dev/null 2>&1 
+	ping -4c5 -W1  $TARGET >/dev/null 2>&1 
 	RESULT=$? 
 	echo $RESULT > $STATE_FILE
 	
 	if [ $RESULT -eq $OK ] && [ $PREV_STATUS -ne $OK ]
 	then
 		until curl -s \
-			-H "Title: INFO: Power On" \
+			-H "Title: INFO: Power On (${LOCATION:-})" \
 			-H "Priority: default" \
 			-H "Tags: info,power" \
 			-d "You can arrive safely to home" \
@@ -85,9 +106,10 @@ main() {
 		do
 			echo "ERROR: waiting for connection" >&2
 		done
+		write_to_csv ON
 	elif [ $RESULT -ne $OK ] && [ $PREV_STATUS -eq $OK ]; then
 		until curl -s \
-			-H "Title: ALERT: Power Outage!" \
+			-H "Title: ALERT: Power Outage! (${LOCATION:-})" \
 			-H "Priority: urgent" \
 			-H "Tags: warning,power" \
 			-d "You're advised!" \
@@ -95,8 +117,9 @@ main() {
 		do
 			echo "ERROR: waiting for connection" >&2
 		done
+		write_to_csv OFF
 	fi
 }
 
-main $@
+main "$@"
 

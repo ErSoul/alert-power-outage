@@ -30,7 +30,17 @@ The notification goes through a [ntfy.sh](https://ntfy.sh) topic.
 
 ## USAGE
 
-`* * * * * /path/to/your/script/notify-termux-plugged.sh >> /var/log/termux-battery.log`
+`* * * * * /path/to/your/script/notify-termux-plugged.sh >> /var/log/termux-power.log`
+
+Options for *notify-network-plugged.sh*:
+`-t TOPIC` — ntfy topic to send the notification to.
+`-f FILE` — file to read/store the previous state.
+`-o CSV_FILE` — optional output file for historic data.
+`-l LOCATION` — optional label for the location.
+
+`* * * * * /path/to/your/script/notify-network-plugged.sh -t $NTFY_TOPIC -f /dev/shm/state -l "SOMEWHERE AROUND"`
+
+Note that when the *LOCATION* contains spaces it must be quoted, e.g. `-l "NEW YORK"`, so it is parsed as a single value.
 
 ## TODO
 
