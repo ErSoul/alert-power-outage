@@ -101,10 +101,10 @@ main() {
 			-H "Title: INFO: Power On (${LOCATION:-})" \
 			-H "Priority: default" \
 			-H "Tags: info,power" \
-			-d "You can arrive safely to home" \
+			-d "You can arrive safely to home." \
 			ntfy.sh/$TOPIC 2>&1 > /dev/null
 		do
-			echo "ERROR: waiting for connection" >&2
+			echo "ERROR: waiting for connection." >&2
 		done
 		write_to_csv ON
 	elif [ $RESULT -ne $OK ] && [ $PREV_STATUS -eq $OK ]; then
@@ -115,7 +115,7 @@ main() {
 			-d "You're advised!" \
 			ntfy.sh/$TOPIC 2>&1 > /dev/null
 		do
-			echo "ERROR: waiting for connection" >&2
+			echo "ERROR: waiting for connection." >&2
 		done
 		write_to_csv OFF
 	fi
